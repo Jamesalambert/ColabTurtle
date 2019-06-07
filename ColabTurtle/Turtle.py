@@ -10,7 +10,7 @@ import math
 # Looks of the figures are inspired from Blockly Games / Turtle (blockly-games.appspot.com/turtle)
 
 DEFAULT_WINDOW_SIZE = (800, 500)
-DEFAULT_SPEED = 4
+DEFAULT_SPEED = 7
 DEFAULT_TURTLE_VISIBILITY = True
 DEFAULT_PEN_COLOR = 'white'
 DEFAULT_TURTLE_DEGREE = 270
