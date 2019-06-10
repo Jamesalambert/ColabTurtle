@@ -12,13 +12,16 @@ import math
 DEFAULT_WINDOW_SIZE = (800, 500)
 DEFAULT_SPEED = 7
 DEFAULT_TURTLE_VISIBILITY = True
-DEFAULT_PEN_COLOR = 'white'
+DEFAULT_PEN_COLOR = 'blue'
 DEFAULT_TURTLE_DEGREE = 270
 DEFAULT_BACKGROUND_COLOR = 'black'
+DEFAULT_BACKGROUND_FILE = None
 DEFAULT_IS_PEN_DOWN = True
 DEFAULT_SVG_LINES_STRING = ""
 DEFAULT_PEN_WIDTH = 4
 VALID_COLORS = ('white', 'yellow', 'orange', 'red', 'green', 'blue', 'purple', 'grey', 'black')
+VALID_BACKGROUNDS = {1 : 'mars1.png', 2: 'mars2.jpg'}
+
 SVG_TEMPLATE = """
       <svg width="{window_width}" height="{window_height}">
         <rect width="100%" height="100%" fill="{background_color}"/>
@@ -26,6 +29,21 @@ SVG_TEMPLATE = """
         {turtle}
       </svg>
     """
+    
+SVG_BG_TEMPLATE = """
+      <svg width="{window_width}" height="{window_height}">
+          <defs>
+            <pattern id="background" patternUnits="userSpaceOnUse" width="100%" height="100%">
+              <image href="ColabTurtle/ColabTurtle/backgrounds/test/{filename}" x="0" y="0" width="100%" height="100%" />
+            </pattern>
+          </defs>
+            <rect width="100%" height="100%" fill="url(#background)"/>
+        {lines}
+        {turtle}
+      </svg>
+    """
+    
+    
 TURTLE_SVG_TEMPLATE = """
       <g visibility={visibility} transform="rotate({degrees},{turtle_x},{turtle_y}) translate({turtle_x}, {turtle_y})">
         <circle stroke="{turtle_color}" stroke-width="3" fill="transparent" r="12" cx="0" cy="0"/>
@@ -49,6 +67,7 @@ window_size = DEFAULT_WINDOW_SIZE
 turtle_pos = (DEFAULT_WINDOW_SIZE[0] // 2, DEFAULT_WINDOW_SIZE[1] // 2)
 turtle_degree = DEFAULT_TURTLE_DEGREE
 background_color = DEFAULT_BACKGROUND_COLOR
+background_file = DEFAULT_BACKGROUND_FILE
 is_pen_down = DEFAULT_IS_PEN_DOWN
 svg_lines_string = DEFAULT_SVG_LINES_STRING
 pen_width = DEFAULT_PEN_WIDTH
@@ -66,6 +85,7 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     global turtle_pos
     global turtle_degree
     global background_color
+    global background_file
     global is_pen_down
     global svg_lines_string
     global pen_width
@@ -85,6 +105,7 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     turtle_pos = (window_size[0] // 2, window_size[1] // 2)
     turtle_degree = DEFAULT_TURTLE_DEGREE
     background_color = DEFAULT_BACKGROUND_COLOR
+    background_file = DEFAULT_BACKGROUND_FILE
     is_pen_down = DEFAULT_IS_PEN_DOWN
     svg_lines_string = DEFAULT_SVG_LINES_STRING
     pen_width = DEFAULT_PEN_WIDTH
@@ -105,9 +126,18 @@ def _generateTurtleSvgDrawing():
 
 # helper function for generating the whole svg string
 def _genereateSvgDrawing():
-    return SVG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],
+
+    global background_file
+    
+    if(background_file is None):
+        out = SVG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],
                                background_color=background_color, lines=svg_lines_string,
                                turtle=_generateTurtleSvgDrawing())
+    else:
+        out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=background_file, lines=svg_lines_string,
+                                turtle=_generateTurtleSvgDrawing())                           
+    #print(out)
+    return out
 
 
 # helper functions for updating the screen using the latest positions/angles/lines etc.
