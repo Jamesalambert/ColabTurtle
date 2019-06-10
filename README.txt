@@ -1,23 +1,19 @@
-Turtle for Google Colab notebooks
-===================
+This is a fork of Tolgaatam's ColabTurtle.
 
-Installation for Google Colab:
-----
-Create an empty code cell and type:
-
-    !pip3 install ColabTurtle
-
-Run the code cell.
+It work perfectly well on a local machine too and I've added the ability to set a background image.
 
 
-Usage
-----
-In any code cell, import like following:
+The original README is below but I'm using it a little differently on a local machine.
 
-    from ColabTurtle.Turtle import *
+Installation
+============
 
-As Colab stores the declared variables in the runtime, call this before using: 
+Open a new jupyter notebook and add a symlink to Turtle.py in the same folder as the notebook.
 
-    initializeTurtle()
+Use
+===
 
-Have fun drawing!
+import Turtle
+Turtle.initializeTurtle()
+
+Turtle.background_file = any file you like
