@@ -15,13 +15,14 @@ DEFAULT_TURTLE_VISIBILITY = True
 DEFAULT_PEN_COLOR = 'blue'
 DEFAULT_TURTLE_DEGREE = 270
 DEFAULT_BACKGROUND_COLOR = 'black'
-DEFAULT_BACKGROUND_FILE = None
+DEFAULT_BACKGROUND = 0
 DEFAULT_IS_PEN_DOWN = True
 DEFAULT_SVG_LINES_STRING = ""
 DEFAULT_PEN_WIDTH = 4
 VALID_COLORS = ('white', 'yellow', 'orange', 'red', 'green', 'blue', 'purple', 'grey', 'black')
-VALID_BACKGROUNDS = {1 : 'mars1.png', 2: 'mars2.jpg'}
+VALID_BACKGROUNDS = {0: None, 1 : 'mars1.png', 2: 'mars2.jpg', 3: 'test.001.png', 4: 'test.002.png'}
 
+#the regular solid colour background template
 SVG_TEMPLATE = """
       <svg width="{window_width}" height="{window_height}">
         <rect width="100%" height="100%" fill="{background_color}"/>
@@ -29,7 +30,8 @@ SVG_TEMPLATE = """
         {turtle}
       </svg>
     """
-    
+
+#The Template used if a background image is set
 SVG_BG_TEMPLATE = """
       <svg width="{window_width}" height="{window_height}">
           <defs>
@@ -67,7 +69,7 @@ window_size = DEFAULT_WINDOW_SIZE
 turtle_pos = (DEFAULT_WINDOW_SIZE[0] // 2, DEFAULT_WINDOW_SIZE[1] // 2)
 turtle_degree = DEFAULT_TURTLE_DEGREE
 background_color = DEFAULT_BACKGROUND_COLOR
-background_file = DEFAULT_BACKGROUND_FILE
+background = DEFAULT_BACKGROUND
 is_pen_down = DEFAULT_IS_PEN_DOWN
 svg_lines_string = DEFAULT_SVG_LINES_STRING
 pen_width = DEFAULT_PEN_WIDTH
@@ -85,7 +87,7 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     global turtle_pos
     global turtle_degree
     global background_color
-    global background_file
+    global background
     global is_pen_down
     global svg_lines_string
     global pen_width
@@ -105,7 +107,7 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     turtle_pos = (window_size[0] // 2, window_size[1] // 2)
     turtle_degree = DEFAULT_TURTLE_DEGREE
     background_color = DEFAULT_BACKGROUND_COLOR
-    background_file = DEFAULT_BACKGROUND_FILE
+    background = DEFAULT_BACKGROUND
     is_pen_down = DEFAULT_IS_PEN_DOWN
     svg_lines_string = DEFAULT_SVG_LINES_STRING
     pen_width = DEFAULT_PEN_WIDTH
@@ -127,14 +129,17 @@ def _generateTurtleSvgDrawing():
 # helper function for generating the whole svg string
 def _genereateSvgDrawing():
 
-    global background_file
+    global background
     
-    if(background_file is None):
+    #use the default value of None if an out of bounds number is fed in
+    name = VALID_BACKGROUNDS.get(background,None)
+    
+    if(name is None):
         out = SVG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],
                                background_color=background_color, lines=svg_lines_string,
                                turtle=_generateTurtleSvgDrawing())
     else:
-        out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=background_file, lines=svg_lines_string,
+        out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=name, lines=svg_lines_string,
                                 turtle=_generateTurtleSvgDrawing())                           
     #print(out)
     return out
