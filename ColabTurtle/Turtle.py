@@ -17,10 +17,15 @@ DEFAULT_PEN_COLOR = 'white'
 DEFAULT_TURTLE_DEGREE = 270
 DEFAULT_BACKGROUND_COLOR = 'black'
 DEFAULT_IS_PEN_DOWN = True
-DEFAULT_SVG_LINES_STRING = ""
 DEFAULT_PEN_WIDTH = 3
 VALID_COLORS = ('white', 'yellow', 'orange', 'red', 'green', 'blue', 'purple', 'grey', 'black')
 MISSION_FOLDER = "ColabTurtle/ColabTurtle/backgrounds/Python games/"
+DEFAULT_SVG_ANIMATION_STRING = """
+<animateMotion xlink:href="#turtle" dur="4s" begin="0s" rotate="auto" fill="freeze">
+<mpath xlink:href="#route" />
+</animateMotion>
+"""
+
 
 #the regular solid colour background template
 SVG_TEMPLATE = """
@@ -28,30 +33,39 @@ SVG_TEMPLATE = """
         <rect width="100%" height="100%" fill="{background_color}"/>
         {lines}
         {turtle}
+        {animation}
       </svg>
     """
 
 #The Template used if a background image is set
 SVG_BG_TEMPLATE = """
-      <svg width="{window_width}" height="{window_height}">
-          <defs>
-            <pattern id="background" patternUnits="userSpaceOnUse" width="100%" height="100%">
-              <image href="{filename}" x="0" y="0" width="100%" height="100%" />
-            </pattern>
-          </defs>
-            <rect width="100%" height="100%" fill="url(#background)"/>
-        {lines}
-        {turtle}
-      </svg>
-    """
+<svg width="{window_width}" height="{window_height}">
+    <defs>
+    <pattern id="background" patternUnits="userSpaceOnUse" width="100%" height="100%">
+      <image href="{filename}" x="0" y="0" width="100%" height="100%" />
+    </pattern>
+    </defs>
+<rect width="100%" height="100%" fill="url(#background)"/>
+{lines}
+{turtle}
+{animation}
+</svg>
+"""
     
     
+TURTLE_SVG_TEMPLATE_old = """
+<g id="turtle" visibility={visibility} >
+<circle stroke="{turtle_color}" stroke-width="3" fill="transparent" r="12" cx="0" cy="0"/>
+<polygon points="0,19 3,16 -3,16" style="fill:{turtle_color};stroke:{turtle_color};stroke-width:2"/>
+</g>
+"""
+
 TURTLE_SVG_TEMPLATE = """
-      <g visibility={visibility} transform="rotate({degrees},{turtle_x},{turtle_y}) translate({turtle_x}, {turtle_y})">
-        <circle stroke="{turtle_color}" stroke-width="3" fill="transparent" r="12" cx="0" cy="0"/>
-        <polygon points="0,19 3,16 -3,16" style="fill:{turtle_color};stroke:{turtle_color};stroke-width:2"/>
-      </g>
-    """
+<g id="turtle" visibility={visibility}">
+<circle stroke="{turtle_color}" stroke-width="3" fill="transparent" r="12" cx="0" cy="0"/>
+<polygon points="19,0 16,3 16,-3" style="fill:{turtle_color};stroke:{turtle_color};stroke-width:2"/>
+</g>
+"""
 
 SPEED_TO_SEC_MAP = {1: 1.5, 2: 0.9, 3: 0.7, 4: 0.5, 5: 0.3, 6: 0.18, 7: 0.12, 8: 0.06, 9: 0.04, 10: 0.02}
 
@@ -70,7 +84,6 @@ turtle_pos = (DEFAULT_WINDOW_SIZE[0] // 2, DEFAULT_WINDOW_SIZE[1] // 2)
 turtle_degree = DEFAULT_TURTLE_DEGREE
 background_color = DEFAULT_BACKGROUND_COLOR
 is_pen_down = DEFAULT_IS_PEN_DOWN
-svg_lines_string = DEFAULT_SVG_LINES_STRING
 pen_width = DEFAULT_PEN_WIDTH
 
 drawing_window = None
@@ -87,7 +100,8 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     global turtle_degree
     global background_color
     global is_pen_down
-    global svg_lines_string
+    global svg_animation_string
+    global svg_path
     global pen_width
     global missions
 
@@ -111,12 +125,17 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     turtle_degree = missions.start_degree()
     background_color = DEFAULT_BACKGROUND_COLOR
     is_pen_down = DEFAULT_IS_PEN_DOWN
-    svg_lines_string = DEFAULT_SVG_LINES_STRING
+    svg_path = ""
+    svg_animation_string = DEFAULT_SVG_ANIMATION_STRING
     pen_width = DEFAULT_PEN_WIDTH
 
     
     drawing_window = display(HTML(_genereateSvgDrawing()), display_id=True)
+    
+    go()
 
+def go():
+    _updateDrawing()
 
 # helper function for generating svg string of the turtle
 def _generateTurtleSvgDrawing():
@@ -128,21 +147,29 @@ def _generateTurtleSvgDrawing():
     return TURTLE_SVG_TEMPLATE.format(turtle_color=pen_color, turtle_x=turtle_pos[0], turtle_y=turtle_pos[1], \
                                       visibility=vis, degrees=turtle_degree - 90)
 
+def _generate_svg_path_string():
+    
+    startPoint =  "M {x0},{y0} ".format(x0=missions.start_position()[0], y0=missions.start_position()[1])
+    
+    p = "d = '" + startPoint + svg_path + "'"
+    
+    path_string = """<path id="route" stroke='{pen_color}' stroke-width='{pen_width}' stroke-linecap='round' fill='transparent' {path} />""".format(pen_color=pen_color, pen_width=pen_width, path=p)
+
+    return path_string
 
 # helper function for generating the whole svg string
 def _genereateSvgDrawing():
-
-    global missions
-    
+        
     name = missions.bg_file()
    
     if(name is None):
         out = SVG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],
-                               background_color=background_color, lines=svg_lines_string,
-                               turtle=_generateTurtleSvgDrawing())
+                               background_color=background_color, lines=_generate_svg_path_string,
+                               turtle=_generateTurtleSvgDrawing(),animation=svg_animation_string)
     else:
-        out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=name, lines=svg_lines_string,
-                                turtle=_generateTurtleSvgDrawing())                           
+        out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=name, lines=_generate_svg_path_string(),
+                                turtle=_generateTurtleSvgDrawing(), animation=svg_animation_string)    
+    #print(out)                       
     return out
 
 
@@ -158,14 +185,16 @@ def _updateDrawing():
 def _moveToNewPosition(new_pos):
     global turtle_pos
     global svg_lines_string
+    global missions
+    global svg_path
 
     start_pos = turtle_pos
     if is_pen_down:
-        svg_lines_string += """<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke={pen_color} stroke-width={pen_width} stroke-dasharray='5,5' stroke-linecap='round'/>""".format(
-            x1=start_pos[0], y1=start_pos[1], x2=new_pos[0], y2=new_pos[1], pen_color=pen_color, pen_width=pen_width)
-
+        
+        svg_path += "L {x2},{y2} ".format(x2 = new_pos[0], y2 = new_pos[1])
+        
     turtle_pos = new_pos
-    _updateDrawing()
+    #_updatedrawing()
 
 
 # makes the turtle move forward by 'units' units
@@ -194,7 +223,9 @@ def right(degrees):
         raise ValueError('degrees should be a number')
 
     turtle_degree = (turtle_degree + degrees) % 360
-    _updateDrawing()
+    backward(1)
+    forward(1)                          #an ugly fix to make sure the turtle animates to the correct angle at the end of a line!
+    #_updatedrawing()
 
 
 # makes the turtle move right by 'degrees' degrees (NOT radians)
