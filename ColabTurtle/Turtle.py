@@ -1,6 +1,7 @@
 from IPython.display import display, HTML
 import time
 import math
+import csv
 
 # Created at: 23rd October 2018
 #         by: Tolga Atam
@@ -12,15 +13,14 @@ import math
 DEFAULT_WINDOW_SIZE = (800, 500)
 DEFAULT_SPEED = 7
 DEFAULT_TURTLE_VISIBILITY = True
-DEFAULT_PEN_COLOR = 'blue'
+DEFAULT_PEN_COLOR = 'white'
 DEFAULT_TURTLE_DEGREE = 270
 DEFAULT_BACKGROUND_COLOR = 'black'
-DEFAULT_BACKGROUND = 0
 DEFAULT_IS_PEN_DOWN = True
 DEFAULT_SVG_LINES_STRING = ""
-DEFAULT_PEN_WIDTH = 4
+DEFAULT_PEN_WIDTH = 3
 VALID_COLORS = ('white', 'yellow', 'orange', 'red', 'green', 'blue', 'purple', 'grey', 'black')
-VALID_BACKGROUNDS = {0: None, 1 : 'mars1.png', 2: 'mars2.jpg', 3: 'test.001.png', 4: 'test.002.png'}
+MISSION_FOLDER = "ColabTurtle/ColabTurtle/backgrounds/Python games/"
 
 #the regular solid colour background template
 SVG_TEMPLATE = """
@@ -36,7 +36,7 @@ SVG_BG_TEMPLATE = """
       <svg width="{window_width}" height="{window_height}">
           <defs>
             <pattern id="background" patternUnits="userSpaceOnUse" width="100%" height="100%">
-              <image href="ColabTurtle/ColabTurtle/backgrounds/test/{filename}" x="0" y="0" width="100%" height="100%" />
+              <image href="{filename}" x="0" y="0" width="100%" height="100%" />
             </pattern>
           </defs>
             <rect width="100%" height="100%" fill="url(#background)"/>
@@ -69,7 +69,6 @@ window_size = DEFAULT_WINDOW_SIZE
 turtle_pos = (DEFAULT_WINDOW_SIZE[0] // 2, DEFAULT_WINDOW_SIZE[1] // 2)
 turtle_degree = DEFAULT_TURTLE_DEGREE
 background_color = DEFAULT_BACKGROUND_COLOR
-background = DEFAULT_BACKGROUND
 is_pen_down = DEFAULT_IS_PEN_DOWN
 svg_lines_string = DEFAULT_SVG_LINES_STRING
 pen_width = DEFAULT_PEN_WIDTH
@@ -87,10 +86,14 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     global turtle_pos
     global turtle_degree
     global background_color
-    global background
     global is_pen_down
     global svg_lines_string
     global pen_width
+    global missions
+
+    #load mission data (start positions, angles) from the default folder
+    loadMissions()
+    #print(missions.bg_file())
 
     if initial_speed not in range(1, 11):
         raise ValueError('initial_speed should be an integer in interval [1,10]')
@@ -104,14 +107,14 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
 
     is_turtle_visible = DEFAULT_TURTLE_VISIBILITY
     pen_color = DEFAULT_PEN_COLOR
-    turtle_pos = (window_size[0] // 2, window_size[1] // 2)
-    turtle_degree = DEFAULT_TURTLE_DEGREE
+    turtle_pos = missions.start_position()
+    turtle_degree = missions.start_degree()
     background_color = DEFAULT_BACKGROUND_COLOR
-    background = DEFAULT_BACKGROUND
     is_pen_down = DEFAULT_IS_PEN_DOWN
     svg_lines_string = DEFAULT_SVG_LINES_STRING
     pen_width = DEFAULT_PEN_WIDTH
 
+    
     drawing_window = display(HTML(_genereateSvgDrawing()), display_id=True)
 
 
@@ -129,11 +132,10 @@ def _generateTurtleSvgDrawing():
 # helper function for generating the whole svg string
 def _genereateSvgDrawing():
 
-    global background
+    global missions
     
-    #use the default value of None if an out of bounds number is fed in
-    name = VALID_BACKGROUNDS.get(background,None)
-    
+    name = missions.bg_file()
+   
     if(name is None):
         out = SVG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],
                                background_color=background_color, lines=svg_lines_string,
@@ -141,7 +143,6 @@ def _genereateSvgDrawing():
     else:
         out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=name, lines=svg_lines_string,
                                 turtle=_generateTurtleSvgDrawing())                           
-    #print(out)
     return out
 
 
@@ -160,7 +161,7 @@ def _moveToNewPosition(new_pos):
 
     start_pos = turtle_pos
     if is_pen_down:
-        svg_lines_string += """<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke-linecap="round" style="stroke:{pen_color};stroke-width:{pen_width}"/>""".format(
+        svg_lines_string += """<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke={pen_color} stroke-width={pen_width} stroke-dasharray='5,5' stroke-linecap='round'/>""".format(
             x1=start_pos[0], y1=start_pos[1], x2=new_pos[0], y2=new_pos[1], pen_color=pen_color, pen_width=pen_width)
 
     turtle_pos = new_pos
@@ -311,3 +312,68 @@ def width(width):
     pen_width = width
     # TODO: decide if we should put the timout after changing the speed
     # _updateDrawing()
+    
+def loadMissions(folder = MISSION_FOLDER):
+    
+    global missions
+    
+    path = folder + "missions.tsv"
+    inFile = open(path,'r')
+
+    data = csv.reader(inFile, delimiter='\t')
+
+    start_pos = {int(row[0]): (int(row[1]),int(row[2]),int(row[3])) for row in data}
+    
+    inFile.close()
+    
+    #creat Mission object to store mission data and build bg file names.
+    missions = Missions(folder, start_pos)
+    
+
+#class to hold all the mission data
+class Missions(object):
+    
+    def __init__(self, folder = MISSION_FOLDER, data = {}):
+        self.folder = folder
+        self.start_pos = {k : (v[0],v[1]) for k,v in data.items()}
+        self.start_deg = {k : v[2] for k,v in data.items()}
+        self.current_mission = 0
+    
+    def start_mission(self,n=0):
+        
+        global turtle_pos
+        global turtle_degree
+        
+        if n not in self.start_pos.keys(): 
+            self.current_mission = 0
+        else:
+            self.current_mission = n
+            
+        #Move the turtle to the starting position
+        
+        turtle_pos = self.start_position()
+        turtle_degree = self.start_degree()
+        
+        _updateDrawing()
+        
+    
+    def bg_file(self):
+        if self.current_mission not in self.start_pos.keys(): 
+            return None
+        else:
+            return self.folder + "Python games.{:0>3}.jpeg".format(self.current_mission)
+    
+    def start_position(self):
+        if self.current_mission not in self.start_pos.keys(): 
+            return DEFAULT_WINDOW_SIZE[0] // 2, DEFAULT_WINDOW_SIZE[1] // 2
+        else:
+            return self.start_pos[self.current_mission]
+        
+    def start_degree(self):
+        if self.current_mission not in self.start_pos.keys(): 
+            return 270
+        else:
+            return self.start_deg[self.current_mission]
+
+        
+        
