@@ -55,10 +55,8 @@ SVG_BG_TEMPLATE = """
 """
 
 
-#transform="translate({turtle_x} {turtle_y})"    transform="rotate({degrees} {turtle_x} {turtle_y})"
-
 TURTLE_SVG_TEMPLATE = """
-<g id="turtle" visibility={visibility} transform="translate(0 0) rotate({degrees} 0 0)">
+<g id="turtle" visibility={visibility}>
 <circle stroke="{turtle_color}" stroke-width="3" fill="transparent" r="12" cx="0" cy="0"/>
 <polygon points="19,0 16,3 16,-3" style="fill:{turtle_color};stroke:{turtle_color};stroke-width:2"/>
 </g>
@@ -123,9 +121,13 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     turtle_degree = missions.start_degree()
     turtle_travel = 0
     
-    
     background_color = DEFAULT_BACKGROUND_COLOR
-    svg_path = "L {x0},{y0} ".format(x0 = turtle_pos[0], y0 = turtle_pos[1])
+        
+    #new! The forward command ensre the turtle is always pointing in the new direction of travel.
+    svg_path = "M {x0},{y0} ".format(x0 = missions.start_position()[0], y0=missions.start_position()[1])
+    forward(1)
+    turtle_travel -= 1
+    
     svg_animation_string = DEFAULT_SVG_ANIMATION_STRING
     pen_width = DEFAULT_PEN_WIDTH
 
@@ -152,10 +154,8 @@ def _generateTurtleSvgDrawing():
     return out
 
 def _generate_svg_path_string():
-    
-    startPoint =  "M {x0},{y0} ".format(x0=missions.start_position()[0], y0=missions.start_position()[1])
-    
-    p = "d = '" + startPoint + svg_path + "'"
+        
+    p = "d = '" + svg_path + "'"
     
     path_string = """<path id="route" stroke='{pen_color}' stroke-width='{pen_width}' stroke-dasharray='{length}' stroke-dashoffset='{length}' stroke-linecap='round' fill='transparent' {path} />""".format(pen_color=pen_color, pen_width=pen_width, length=turtle_travel, path=p)
 
@@ -173,7 +173,7 @@ def _genereateSvgDrawing():
     else:
         out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=name, lines=_generate_svg_path_string(),
                                 turtle=_generateTurtleSvgDrawing(), animation=svg_animation_string)    
-    print(out)                       
+    #print(out)                       
     return out
 
 
@@ -188,12 +188,14 @@ def _updateDrawing():
 # helper function for managing any kind of move to a given 'new_pos' and draw lines if pen is down
 def _moveToNewPosition(new_pos):
     global turtle_pos
-    global svg_lines_string
-    global missions
+    #global svg_lines_string
+    #global missions
     global svg_path
+    
     
     if is_pen_down:
         svg_path += "L {x2},{y2} ".format(x2 = new_pos[0], y2 = new_pos[1])
+        
         
     turtle_pos = new_pos
     #_updatedrawing()
@@ -209,7 +211,8 @@ def forward(units):
     alpha = math.radians(turtle_degree)
     ending_point = (turtle_pos[0] + units * math.cos(alpha), turtle_pos[1] + units * math.sin(alpha))
 
-    turtle_travel += abs(units)
+    if is_pen_down:
+        turtle_travel += abs(units)
 
     _moveToNewPosition(ending_point)
 
@@ -229,7 +232,7 @@ def right(degrees):
         raise ValueError('degrees should be a number')
 
     turtle_degree = (turtle_degree + degrees) % 360
-    #backward(1)
+   
     forward(1)                          #an ugly fix to make sure the turtle animates to the correct angle at the end of a line!
     #_updatedrawing()
 
@@ -350,22 +353,22 @@ def width(width):
     # TODO: decide if we should put the timout after changing the speed
     # _updateDrawing()
     
+
 def loadMissions(folder = MISSION_FOLDER):
-    
+
     global missions
-    
+
     path = folder + "missions.tsv"
     inFile = open(path,'r')
 
     data = csv.reader(inFile, delimiter='\t')
 
     start_pos = {int(row[0]): (int(row[1]),int(row[2]),int(row[3])) for row in data}
-    
+
     inFile.close()
-    
+
     #creat Mission object to store mission data and build bg file names.
     missions = Missions(folder, start_pos)
-    
 
 #class to hold all the mission data
 class Missions(object):
@@ -387,11 +390,11 @@ class Missions(object):
             self.current_mission = n
             
         #Move the turtle to the starting position
+        #Move initialiseTurtle() here?
         
         #turtle_pos = self.start_position()
         #turtle_degree = self.start_degree()
-                
-        #_updateDrawing()
+        
         initializeTurtle()
         
     
