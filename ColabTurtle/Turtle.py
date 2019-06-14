@@ -55,10 +55,10 @@ SVG_BG_TEMPLATE = """
 """
 
 
-#transform="translate({turtle_x},{turtle_y})"
+#transform="translate({turtle_x} {turtle_y})"    transform="rotate({degrees} {turtle_x} {turtle_y})"
 
 TURTLE_SVG_TEMPLATE = """
-<g id="turtle" visibility={visibility}>
+<g id="turtle" visibility={visibility} transform="translate(0 0) rotate({degrees} 0 0)">
 <circle stroke="{turtle_color}" stroke-width="3" fill="transparent" r="12" cx="0" cy="0"/>
 <polygon points="19,0 16,3 16,-3" style="fill:{turtle_color};stroke:{turtle_color};stroke-width:2"/>
 </g>
@@ -83,7 +83,7 @@ background_color = DEFAULT_BACKGROUND_COLOR
 is_pen_down = DEFAULT_IS_PEN_DOWN
 pen_width = DEFAULT_PEN_WIDTH
 drawing_window = None
-
+missions = None
 
 # construct the display for turtle
 def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WINDOW_SIZE):
@@ -103,7 +103,7 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     global turtle_travel
     
     #load mission data (start positions, angles) from the default folder
-    loadMissions()
+    #loadMissions()
     #print(missions.bg_file())
 
     if initial_speed not in range(1, 11):
@@ -125,13 +125,13 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     
     
     background_color = DEFAULT_BACKGROUND_COLOR
-    svg_path = ""
+    svg_path = "L {x0},{y0} ".format(x0 = turtle_pos[0], y0 = turtle_pos[1])
     svg_animation_string = DEFAULT_SVG_ANIMATION_STRING
     pen_width = DEFAULT_PEN_WIDTH
 
     drawing_window = display(HTML(_genereateSvgDrawing()), display_id=True)
     
-    go()
+    #go()
     
 
 def go():
@@ -145,7 +145,7 @@ def _generateTurtleSvgDrawing():
         vis = '"hidden"'
 
     out = TURTLE_SVG_TEMPLATE.format(turtle_color=pen_color, turtle_x=turtle_pos[0], turtle_y=turtle_pos[1], \
-                                      visibility=vis, degrees=turtle_degree - 90)
+                                      visibility=vis, degrees=missions.start_degree)
     
     #print(out)
     
@@ -173,7 +173,7 @@ def _genereateSvgDrawing():
     else:
         out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=name, lines=_generate_svg_path_string(),
                                 turtle=_generateTurtleSvgDrawing(), animation=svg_animation_string)    
-    #print(out)                       
+    print(out)                       
     return out
 
 
@@ -388,11 +388,11 @@ class Missions(object):
             
         #Move the turtle to the starting position
         
-        turtle_pos = self.start_position()
-        turtle_degree = self.start_degree()
+        #turtle_pos = self.start_position()
+        #turtle_degree = self.start_degree()
                 
-        _updateDrawing()
-        #initializeTurtle()
+        #_updateDrawing()
+        initializeTurtle()
         
     
     def bg_file(self):
