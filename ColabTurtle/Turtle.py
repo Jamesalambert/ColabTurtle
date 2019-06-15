@@ -1,4 +1,4 @@
-from IPython.display import display, HTML
+from IPython.display import display, HTML, SVG
 import time
 import math
 import csv
@@ -13,19 +13,20 @@ import csv
 DEFAULT_WINDOW_SIZE = (800, 500)
 DEFAULT_SPEED = 7
 DEFAULT_TURTLE_VISIBILITY = True
-DEFAULT_PEN_COLOR = 'white'
+DEFAULT_PEN_COLOR = 'yellow'
 DEFAULT_TURTLE_DEGREE = 270
 DEFAULT_BACKGROUND_COLOR = 'black'
 DEFAULT_IS_PEN_DOWN = True
 DEFAULT_PEN_WIDTH = 3
+DEFAULT_ROBOT_NAME = ""
 VALID_COLORS = ('white', 'yellow', 'orange', 'red', 'green', 'blue', 'purple', 'grey', 'black')
 MISSION_FOLDER = "ColabTurtle/ColabTurtle/backgrounds/Python games/"
 DEFAULT_SVG_ANIMATION_STRING = """
-<animateMotion xlink:href="#turtle" dur="4s" begin="0s" rotate="auto" fill="freeze"> 
+<animateMotion xlink:href="#turtle" dur="{duration}" begin="0s" rotate="auto" fill="freeze"> 
 <mpath xlink:href="#route" />
 </animateMotion>
 
-<animate xlink:href="#route" attributeName="stroke-dashoffset" to="0" dur="4s" fill="freeze"/>
+<animate xlink:href="#route" attributeName="stroke-dashoffset" begin="0s" to="0" dur="{duration}" fill="freeze"/>
 """
 #fill can be freeze or remove
 
@@ -54,23 +55,22 @@ SVG_BG_TEMPLATE = """
 </svg>
 """
 
-
+#Drawn pointing to the right
 TURTLE_SVG_TEMPLATE = """
 <g id="turtle" visibility={visibility}>
 <circle stroke="{turtle_color}" stroke-width="3" fill="transparent" r="12" cx="0" cy="0"/>
 <polygon points="19,0 16,3 16,-3" style="fill:{turtle_color};stroke:{turtle_color};stroke-width:2"/>
+<text x="0" y="-22" fill={turtle_color}>{label}</text>
 </g>
 """
 
 SPEED_TO_SEC_MAP = {1: 1.5, 2: 0.9, 3: 0.7, 4: 0.5, 5: 0.3, 6: 0.18, 7: 0.12, 8: 0.06, 9: 0.04, 10: 0.02}
-
 
 # helper function that maps [1,10] speed values to ms delays
 def _speedToSec(speed):
     return SPEED_TO_SEC_MAP[speed]
 
 
-timeout = _speedToSec(DEFAULT_SPEED)
 is_turtle_visible = DEFAULT_TURTLE_VISIBILITY
 pen_color = DEFAULT_PEN_COLOR
 window_size = DEFAULT_WINDOW_SIZE
@@ -82,12 +82,13 @@ is_pen_down = DEFAULT_IS_PEN_DOWN
 pen_width = DEFAULT_PEN_WIDTH
 drawing_window = None
 missions = None
+speed = DEFAULT_SPEED
+robot_name = DEFAULT_ROBOT_NAME
 
 # construct the display for turtle
 def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WINDOW_SIZE):
     global window_size
     global drawing_window
-    global timeout
     global is_turtle_visible
     global pen_color
     global turtle_pos
@@ -99,6 +100,8 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     global pen_width
     global missions
     global turtle_travel
+    global speed
+    global robot_name
     
     #load mission data (start positions, angles) from the default folder
     #loadMissions()
@@ -106,13 +109,11 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
 
     if initial_speed not in range(1, 11):
         raise ValueError('initial_speed should be an integer in interval [1,10]')
-    timeout = _speedToSec(initial_speed)
     if not (isinstance(initial_window_size, tuple) and len(initial_window_size) == 2 and isinstance(
             initial_window_size[0], int) and isinstance(initial_window_size[1], int)):
         raise ValueError('window_size should be a tuple of 2 integers')
 
     window_size = initial_window_size
-    timeout = _speedToSec(initial_speed)
 
     is_pen_down = DEFAULT_IS_PEN_DOWN
     is_turtle_visible = DEFAULT_TURTLE_VISIBILITY
@@ -120,10 +121,11 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     turtle_pos = missions.start_position()
     turtle_degree = missions.start_degree()
     turtle_travel = 0
-    
+    speed = DEFAULT_SPEED
+    robot_name = DEFAULT_ROBOT_NAME
     background_color = DEFAULT_BACKGROUND_COLOR
         
-    #new! The forward command ensre the turtle is always pointing in the new direction of travel.
+    #new! The forward command ensures the turtle is always pointing in the new direction of travel.
     svg_path = "M {x0},{y0} ".format(x0 = missions.start_position()[0], y0=missions.start_position()[1])
     forward(1)
     turtle_travel -= 1
@@ -132,7 +134,7 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     pen_width = DEFAULT_PEN_WIDTH
 
     drawing_window = display(HTML(_genereateSvgDrawing()), display_id=True)
-    
+    #print("init",drawing_window)
     #go()
     
 
@@ -140,6 +142,19 @@ def go():
     _updateDrawing()
 
 # helper function for generating svg string of the turtle
+
+def _generate_svg_animation_string():
+    
+    if speed == 0:
+        t = 4
+    elif (turtle_travel / (10 * speed)) > 120:
+        t = 120
+    else:
+        t = turtle_travel / (10 * speed)
+    
+    #print(speed,t)
+    return svg_animation_string.format(duration = "{}s".format(t))
+
 def _generateTurtleSvgDrawing():
     if is_turtle_visible:
         vis = '"visible"'
@@ -147,7 +162,7 @@ def _generateTurtleSvgDrawing():
         vis = '"hidden"'
 
     out = TURTLE_SVG_TEMPLATE.format(turtle_color=pen_color, turtle_x=turtle_pos[0], turtle_y=turtle_pos[1], \
-                                      visibility=vis, degrees=missions.start_degree)
+                                      visibility=vis, degrees=missions.start_degree, label=robot_name)
     
     #print(out)
     
@@ -172,7 +187,7 @@ def _genereateSvgDrawing():
                                turtle=_generateTurtleSvgDrawing(),animation=svg_animation_string)
     else:
         out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=name, lines=_generate_svg_path_string(),
-                                turtle=_generateTurtleSvgDrawing(), animation=svg_animation_string)    
+                                turtle=_generateTurtleSvgDrawing(), animation=_generate_svg_animation_string())    
     #print(out)                       
     return out
 
@@ -181,7 +196,8 @@ def _genereateSvgDrawing():
 def _updateDrawing():
     if drawing_window == None:
         raise AttributeError("Display has not been initialized yet. Call initializeTurtle() before using.")
-    time.sleep(timeout)
+    #time.sleep(timeout)
+    #print("update",drawing_window)
     drawing_window.update(HTML(_genereateSvgDrawing()))
 
 
@@ -192,13 +208,11 @@ def _moveToNewPosition(new_pos):
     #global missions
     global svg_path
     
-    
-    if is_pen_down:
-        svg_path += "L {x2},{y2} ".format(x2 = new_pos[0], y2 = new_pos[1])
+    svg_path += "L {x2},{y2} ".format(x2 = new_pos[0], y2 = new_pos[1])
         
         
     turtle_pos = new_pos
-    #_updatedrawing()
+    #_updateDrawing()
 
 
 # makes the turtle move forward by 'units' units
@@ -211,8 +225,7 @@ def forward(units):
     alpha = math.radians(turtle_degree)
     ending_point = (turtle_pos[0] + units * math.cos(alpha), turtle_pos[1] + units * math.sin(alpha))
 
-    if is_pen_down:
-        turtle_travel += abs(units)
+    turtle_travel += abs(units)
 
     _moveToNewPosition(ending_point)
 
@@ -232,8 +245,9 @@ def right(degrees):
         raise ValueError('degrees should be a number')
 
     turtle_degree = (turtle_degree + degrees) % 360
-   
+    
     forward(1)                          #an ugly fix to make sure the turtle animates to the correct angle at the end of a line!
+    
     #_updatedrawing()
 
 
@@ -243,9 +257,9 @@ def left(degrees):
         raise ValueError('degrees should be a number')
     right(-1 * degrees)
 
-
+# This is currently unused and broken!
 # raises the pen such that following turtle moves will not cause any drawings
-def penup():
+def _penup():
     global is_pen_down
 
     is_pen_down = False
@@ -254,7 +268,7 @@ def penup():
 
 
 # lowers the pen such that following turtle moves will now cause drawings
-def pendown():
+def _pendown():
     global is_pen_down
 
     is_pen_down = True
@@ -263,12 +277,13 @@ def pendown():
 
 
 # update the speed of the moves, [1,10]
-def speed(speed):
-    global timeout
+def set_speed(s):
 
-    if speed not in range(1, 11):
-        raise ValueError('speed should be an integer in the interval [1,10]')
-    timeout = _speedToSec(speed)
+    global speed
+    if s not in range(0, 11):
+        raise ValueError('speed should be an integer in the interval [0,10]')
+     
+    speed = s
     # TODO: decide if we should put the timout after changing the speed
     # _updateDrawing()
 
@@ -389,9 +404,7 @@ class Missions(object):
         else:
             self.current_mission = n
             
-        #Move the turtle to the starting position
-        #Move initialiseTurtle() here?
-        
+        #Move the turtle to the starting position        
         #turtle_pos = self.start_position()
         #turtle_degree = self.start_degree()
         
