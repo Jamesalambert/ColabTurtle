@@ -1,12 +1,21 @@
-from distutils.core import setup
+import setuptools
 
-setup(
-    name='ColabTurtle',
-    version='2.0.0',
-    packages=['ColabTurtle'],
-    url='https://github.com/tolgaatam/ColabTurtle',
-    license='MIT',
-    author='Tolga Atam',
-    author_email='atam@sabanciuniv.edu',
-    description='An HTML based Turtle implementation, in order to work in Google Colab'
+with open("README.txt", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="roverdrive-jlambert",
+    version="0.5.1",
+    author="James Lambert",
+    #author_email="author@example.com",
+    description="a turtle-like educational package",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/Jamesalambert/ColabTurtle",
+    packages=setuptools.find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
 )
