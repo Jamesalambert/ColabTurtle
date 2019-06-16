@@ -19,20 +19,31 @@ DEFAULT_BACKGROUND_COLOR = 'black'
 DEFAULT_IS_PEN_DOWN = True
 DEFAULT_PEN_WIDTH = 3
 DEFAULT_ROBOT_NAME = ""
+SPEED_TO_SEC_MAP = {1: 1.5, 2: 0.9, 3: 0.7, 4: 0.5, 5: 0.3, 6: 0.18, 7: 0.12, 8: 0.06, 9: 0.04, 10: 0.02}
 VALID_COLORS = ('white', 'yellow', 'orange', 'red', 'green', 'blue', 'purple', 'grey', 'black')
 MISSION_FOLDER = "ColabTurtle/ColabTurtle/backgrounds/Python games/"
+
 DEFAULT_SVG_ANIMATION_STRING = """
-<animateMotion xlink:href="#turtle" dur="{duration}" begin="0s" rotate="auto" fill="freeze"> 
-<mpath xlink:href="#route" />
+<animateMotion  xlink:href="#turtle" 
+                dur="{duration}" 
+                begin="0s" 
+                rotate="auto" 
+                fill="freeze"> 
+    <mpath          xlink:href="#route" />
 </animateMotion>
 
-<animate xlink:href="#route" attributeName="stroke-dashoffset" begin="0s" to="0" dur="{duration}" fill="freeze"/>
+<animate    xlink:href="#route" 
+            attributeName="stroke-dashoffset" 
+            begin="0s" 
+            to="0" 
+            dur="{duration}" 
+            fill="freeze"/>
 """
 #fill can be freeze or remove
 
 #the regular solid colour background template
 SVG_TEMPLATE = """
-      <svg width="{window_width}" height="{window_height}">
+      <svg width="{window_width}" height="{window_height}" viewBox="0 0 800 500">
         <rect width="100%" height="100%" fill="{background_color}"/>
         {lines}
         {turtle}
@@ -42,29 +53,51 @@ SVG_TEMPLATE = """
 
 #The Template used if a background image is set
 SVG_BG_TEMPLATE = """
-<svg width="{window_width}" height="{window_height}">
+<svg width="{window_width}" height="{window_height}" viewBox="0 0 800 500">
     <defs>
-    <pattern id="background" patternUnits="userSpaceOnUse" width="100%" height="100%">
-      <image href="{filename}" x="0" y="0" width="100%" height="100%" />
-    </pattern>
+        <pattern    id="background" 
+                    patternUnits="userSpaceOnUse" 
+                    width="100%" 
+                    height="100%">
+                    
+            <image      href="{filename}" 
+                        x="0" 
+                        y="0" 
+                        width="100%" 
+                        height="100%" />
+        </pattern>
     </defs>
-<rect width="100%" height="100%" fill="url(#background)"/>
-{lines}
-{turtle}
-{animation}
+    <rect   width="100%" 
+            height="100%" 
+            fill="url(#background)"/>
+    {lines}
+    {turtle}
+    {animation}
 </svg>
 """
 
 #Drawn pointing to the right
 TURTLE_SVG_TEMPLATE = """
 <g id="turtle" visibility={visibility}>
-<circle stroke="{turtle_color}" stroke-width="3" fill="transparent" r="12" cx="0" cy="0"/>
-<polygon points="19,0 16,3 16,-3" style="fill:{turtle_color};stroke:{turtle_color};stroke-width:2"/>
-<text x="0" y="-22" fill={turtle_color}>{label}</text>
+    <circle stroke="{turtle_color}" 
+            stroke-width="3" 
+            fill="transparent" 
+            r="12" 
+            cx="0" 
+            cy="0"/>
+    <polygon    points="19,0 16,3 16,-3" 
+                fill="{turtle_color}"
+                stroke="{turtle_color}"
+                stroke-width="2"/>
+    <text   x="0" 
+            y="-22" 
+            fill={turtle_color}>
+            {label}
+    </text>
 </g>
 """
 
-SPEED_TO_SEC_MAP = {1: 1.5, 2: 0.9, 3: 0.7, 4: 0.5, 5: 0.3, 6: 0.18, 7: 0.12, 8: 0.06, 9: 0.04, 10: 0.02}
+
 
 # helper function that maps [1,10] speed values to ms delays
 def _speedToSec(speed):
@@ -91,8 +124,8 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     global drawing_window
     global is_turtle_visible
     global pen_color
-    global turtle_pos
-    global turtle_degree
+    # global turtle_pos
+#     global turtle_degree
     global background_color
     global is_pen_down
     global svg_animation_string
@@ -118,15 +151,18 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     is_pen_down = DEFAULT_IS_PEN_DOWN
     is_turtle_visible = DEFAULT_TURTLE_VISIBILITY
     pen_color = DEFAULT_PEN_COLOR
-    turtle_pos = missions.start_position()
-    turtle_degree = missions.start_degree()
+    # turtle_pos = missions.start_position()
+#     turtle_degree = missions.start_degree()
     turtle_travel = 0
     speed = DEFAULT_SPEED
     robot_name = DEFAULT_ROBOT_NAME
     background_color = DEFAULT_BACKGROUND_COLOR
         
-    #new! The forward command ensures the turtle is always pointing in the new direction of travel.
-    svg_path = "M {x0},{y0} ".format(x0 = missions.start_position()[0], y0=missions.start_position()[1])
+    
+    svg_path = "M {x0},{y0} ".format(   x0 = missions.start_position()[0], 
+                                        y0=missions.start_position()[1])
+    
+    #ugly fix! The forward command ensures the turtle is always pointing in the new direction of travel.
     forward(1)
     turtle_travel -= 1
     
@@ -134,7 +170,6 @@ def initializeTurtle(initial_speed=DEFAULT_SPEED, initial_window_size=DEFAULT_WI
     pen_width = DEFAULT_PEN_WIDTH
 
     drawing_window = display(HTML(_genereateSvgDrawing()), display_id=True)
-    #print("init",drawing_window)
     #go()
     
 
@@ -153,7 +188,7 @@ def _generate_svg_animation_string():
         t = turtle_travel / (10 * speed)
     
     #print(speed,t)
-    return svg_animation_string.format(duration = "{}s".format(t))
+    return svg_animation_string.format(duration = "{:.2f}s".format(t))
 
 def _generateTurtleSvgDrawing():
     if is_turtle_visible:
@@ -161,8 +196,12 @@ def _generateTurtleSvgDrawing():
     else:
         vis = '"hidden"'
 
-    out = TURTLE_SVG_TEMPLATE.format(turtle_color=pen_color, turtle_x=turtle_pos[0], turtle_y=turtle_pos[1], \
-                                      visibility=vis, degrees=missions.start_degree, label=robot_name)
+    out = TURTLE_SVG_TEMPLATE.format(   turtle_color=pen_color, 
+                                        turtle_x=turtle_pos[0], 
+                                        turtle_y=turtle_pos[1],
+                                        visibility=vis, 
+                                        degrees=missions.start_degree, 
+                                        label=robot_name)
     
     #print(out)
     
@@ -172,7 +211,16 @@ def _generate_svg_path_string():
         
     p = "d = '" + svg_path + "'"
     
-    path_string = """<path id="route" stroke='{pen_color}' stroke-width='{pen_width}' stroke-dasharray='{length}' stroke-dashoffset='{length}' stroke-linecap='round' fill='transparent' {path} />""".format(pen_color=pen_color, pen_width=pen_width, length=turtle_travel, path=p)
+    path_string = """<path  id="route" 
+                            stroke='{pen_color}' 
+                            stroke-width='{pen_width}' 
+                            stroke-dasharray='{length}' 
+                            stroke-dashoffset='{length}' 
+                            stroke-linecap='round' 
+                            fill='transparent' {path} />""".format( pen_color=pen_color, 
+                                                                    pen_width=pen_width, 
+                                                                    length=turtle_travel, 
+                                                                    path=p)
 
     return path_string
 
@@ -182,12 +230,19 @@ def _genereateSvgDrawing():
     name = missions.bg_file()
    
     if(name is None):
-        out = SVG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],
-                               background_color=background_color, lines=_generate_svg_path_string(),
-                               turtle=_generateTurtleSvgDrawing(),animation=svg_animation_string)
+        out = SVG_TEMPLATE.format(      window_width=window_size[0], 
+                                        window_height=window_size[1],
+                                        background_color=background_color, 
+                                        lines=_generate_svg_path_string(),
+                                        turtle=_generateTurtleSvgDrawing(), 
+                                        animation=_generate_svg_animation_string())
     else:
-        out = SVG_BG_TEMPLATE.format(window_width=window_size[0], window_height=window_size[1],                                         filename=name, lines=_generate_svg_path_string(),
-                                turtle=_generateTurtleSvgDrawing(), animation=_generate_svg_animation_string())    
+        out = SVG_BG_TEMPLATE.format(   window_width=window_size[0], 
+                                        window_height=window_size[1],
+                                        filename=name, 
+                                        lines=_generate_svg_path_string(),
+                                        turtle=_generateTurtleSvgDrawing(), 
+                                        animation=_generate_svg_animation_string())    
     #print(out)                       
     return out
 
@@ -196,7 +251,7 @@ def _genereateSvgDrawing():
 def _updateDrawing():
     if drawing_window == None:
         raise AttributeError("Display has not been initialized yet. Call initializeTurtle() before using.")
-    #time.sleep(timeout)
+    #time.sleep(2)
     #print("update",drawing_window)
     drawing_window.update(HTML(_genereateSvgDrawing()))
 
@@ -208,11 +263,12 @@ def _moveToNewPosition(new_pos):
     #global missions
     global svg_path
     
-    svg_path += "L {x2},{y2} ".format(x2 = new_pos[0], y2 = new_pos[1])
+    svg_path += "L {x2:.2f},{y2:.2f} ".format(x2 = new_pos[0], y2 = new_pos[1])
         
         
     turtle_pos = new_pos
     #_updateDrawing()
+
 
 
 # makes the turtle move forward by 'units' units
@@ -370,7 +426,6 @@ def width(width):
     
 
 def loadMissions(folder = MISSION_FOLDER):
-
     global missions
 
     path = folder + "missions.tsv"
@@ -384,6 +439,9 @@ def loadMissions(folder = MISSION_FOLDER):
 
     #creat Mission object to store mission data and build bg file names.
     missions = Missions(folder, start_pos)
+    
+    #initializeTurtle()
+    #missions.start_mission(0)
 
 #class to hold all the mission data
 class Missions(object):
@@ -403,11 +461,12 @@ class Missions(object):
             self.current_mission = 0
         else:
             self.current_mission = n
-            
-        #Move the turtle to the starting position        
-        #turtle_pos = self.start_position()
-        #turtle_degree = self.start_degree()
         
+        #Move the turtle to the starting position        
+        turtle_pos = self.start_position()
+        turtle_degree = self.start_degree()
+        
+        #set up all other default values
         initializeTurtle()
         
     
@@ -419,7 +478,7 @@ class Missions(object):
     
     def start_position(self):
         if self.current_mission not in self.start_pos.keys(): 
-            return DEFAULT_WINDOW_SIZE[0] // 2, DEFAULT_WINDOW_SIZE[1] // 2
+            return (DEFAULT_WINDOW_SIZE[0] // 2, DEFAULT_WINDOW_SIZE[1] // 2)
         else:
             return self.start_pos[self.current_mission]
         
